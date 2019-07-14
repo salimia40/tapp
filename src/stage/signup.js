@@ -69,7 +69,7 @@ const inputHandler = async (ctx, next) => {
         } else if (!user.acceptedTerms) {
             await ctx.reply(config.contract[0])
             await ctx.reply(config.contract[1])
-            await ctx.reply(config.contract[2])
+            // await ctx.reply(config.contract[2])
             await ctx.reply("آیا با شرایط و قوانین ما موافقط دارید؟", {
                 reply_markup: {
                     inline_keyboard: [
