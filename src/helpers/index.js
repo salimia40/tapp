@@ -77,128 +77,140 @@ const toman = (v) => {
     },
     formatNumber = (v) => {
         return v.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
-    },
-    matchTolerance = async (ctx, price) => {
-            let tol = await ctx.setting.getTolerance()
-            let q = await ctx.setting.getQuotation()
-            return (price >= (q - tol) && price <= (q + tol))
-        },
-        maxGold = async (ctx) => {
-                let bc = await ctx.setting.getBaseCharge()
-                return Math.round(ctx.user.charge / bc)
-            },
-            countProfit = (buyPrice, sellPrice) => {
-                let diff = sellPrice - buyPrice
-                return diff * 23.08
-            },
-            parseLafz = l => {
-                let a, b, isSell
-                isSell = l.includes('ف')
-                if (isSell) {
-                    [a, b] = l.split('ف')
-                } else {
-                    [a, b] = l.split('خ')
-                }
-                a = +a
-                b = +b
-                return [a, isSell, b]
-            },
-            maxCanBuy = async (ctx) => {
-                    let bc = await ctx.setting.getBaseCharge()
-                    let mx = Math.round(ctx.user.charge / bc)
-                    let bills = await Bill.find({
-                        closed: true,
-                        userId: ctx.user.userId,
-                        isSell: false,
-                        left: {
-                            $gt: 0
-                        }
-                    })
-                    let am = 0
-                    for (var i = 0; i < bills.length; i++) {
-                        am += bills[i].left
-                    }
-                    mx -= am
-                    if (mx < 0) mx = 0
-                    return mx
-                },
-                maxCanSell = async (ctx) => {
-                        let bc = await ctx.setting.getBaseCharge()
-                        let mx = Math.round(ctx.user.charge / bc)
-                        let bills = await Bill.find({
-                            closed: true,
-                            userId: ctx.user.userId,
-                            isSell: true,
-                            left: {
-                                $gt: 0
-                            }
-                        })
-                        let am = 0
-                        for (var i = 0; i < bills.length; i++) {
-                            am += bills[i].left
-                        }
-                        mx -= am
-                        if (mx < 0) mx = 0
-                        return mx
-                    },
-                    buyAvg = async (userId) => {
-                            let mgs = await Bill.find({
-                                userId,
-                                isSell: false,
-                                left: {
-                                    $gt: 0
-                                }
-                            })
+    }
+const matchTolerance = async (ctx, price) => {
+    let tol = await ctx.setting.getTolerance()
+    let q = await ctx.setting.getQuotation()
+    return (price >= (q - tol) && price <= (q + tol))
+}
+const maxGold = async (ctx) => {
+    let bc = await ctx.setting.getBaseCharge()
+    return Math.round(ctx.user.charge / bc)
+}
+const countProfit = (buyPrice, sellPrice) => {
+    let diff = sellPrice - buyPrice
+    return diff * 23.08
+}
+const parseLafz = l => {
+    let a, b, isSell
+    isSell = l.includes('ف')
+    if (isSell) {
+        [a, b] = l.split('ف')
+    } else {
+        [a, b] = l.split('خ')
+    }
+    a = +a
+    b = +b
+    return [a, isSell, b]
+}
+const maxCanBuy = async (ctx) => {
+    let bc = await ctx.setting.getBaseCharge()
+    let mx = Math.round(ctx.user.charge / bc)
+    let bills = await Bill.find({
+        closed: true,
+        userId: ctx.user.userId,
+        isSell: false,
+        left: {
+            $gt: 0
+        }
+    })
+    let am = 0
+    for (var i = 0; i < bills.length; i++) {
+        am += bills[i].left
+    }
+    mx -= am
+    if (mx < 0) mx = 0
+    return mx
+}
+const maxCanSell = async (ctx) => {
+    let bc = await ctx.setting.getBaseCharge()
+    let mx = Math.round(ctx.user.charge / bc)
+    let bills = await Bill.find({
+        closed: true,
+        userId: ctx.user.userId,
+        isSell: true,
+        left: {
+            $gt: 0
+        }
+    })
+    let am = 0
+    for (var i = 0; i < bills.length; i++) {
+        am += bills[i].left
+    }
+    mx -= am
+    if (mx < 0) mx = 0
+    return mx
+}
+const buyAvg = async (userId) => {
+    let mgs = await Bill.find({
+        userId,
+        closed: true,
+        isSell: false,
+        left: {
+            $gt: 0
+        }
+    })
 
-                            let avg = 0
-                            if (mgs.length > 0) {
-                                let sum = 0
-                                let am = 0
-                                await asyncForEach(mgs, mg => {
-                                    sum += mg.price * mg.left //don't forget to add the base
-                                    am += mg.left
-                                })
-                                avg = sum / am
-                            }
-                            return avg
-                        },
-                        sellAvg = async (userId) => {
-                                let mgs = await Bill.find({
-                                    userId,
-                                    isSell: true,
-                                    left: {
-                                        $gt: 0
-                                    }
-                                })
+    let avg = 0
+    if (mgs.length > 0) {
+        let sum = 0
+        let am = 0
+        console.log('sum',sum)
+        console.log('am',am)
+        console.log('loop started')
 
-                                let avg = 0
-                                if (mgs.length > 0) {
-                                    let sum = 0
-                                    let am = 0
-                                    await asyncForEach(mgs, mg => {
-                                        sum += mg.price * mg.left //don't forget to add the base
-                                        am += mg.left
-                                    })
-                                    avg = sum / am
-                                }
-                                return avg
-                            },
+        await asyncForEach(mgs, mg => {
+            
+        console.log('price',mg.price)
+        console.log('left',mg.left)
+            sum += mg.price * mg.left //don't forget to add the base
+            am += mg.left
+        console.log('sum',sum)
+        console.log('am',am)
+        })
+        avg = sum / am
+        console.log('avg',avg)
+    }
+    return avg
+}
+const sellAvg = async (userId) => {
+    let mgs = await Bill.find({
+        closed: true,
+        userId,
+        isSell: true,
+        left: {
+            $gt: 0
+        }
+    })
+
+    let avg = 0
+    if (mgs.length > 0) {
+        let sum = 0
+        let am = 0
+        await asyncForEach(mgs, mg => {
+            sum += mg.price * mg.left //don't forget to add the base
+            am += mg.left
+        })
+        avg = sum / am
+    }
+    return avg
+}
 
 
-                            isGroupAdmin = async (ctx, botUser) => {
-                                let isBdmin = false
-                                if (groupsThatImAdmin.includes(ctx.chat.id)) isBdmin = true
-                                if (isBdmin) return isBdmin
-                                var mems = await ctx.telegram.getChatAdministrators(ctx.chat.id)
+const isGroupAdmin = async (ctx, botUser) => {
+    let isBdmin = false
+    if (groupsThatImAdmin.includes(ctx.chat.id)) isBdmin = true
+    if (isBdmin) return isBdmin
+    var mems = await ctx.telegram.getChatAdministrators(ctx.chat.id)
 
-                                await asyncForEach(mems, mem => {
-                                    if (mem.user.id == botUser.id) {
-                                        groupsThatImAdmin.push(ctx.chat.id)
-                                        isBdmin = true
-                                    }
-                                })
-                                return isBdmin
-                            }
+    await asyncForEach(mems, mem => {
+        if (mem.user.id == botUser.id) {
+            groupsThatImAdmin.push(ctx.chat.id)
+            isBdmin = true
+        }
+    })
+    return isBdmin
+}
 const countAwkwardness = async (ctx, bill) => {
     // if (bill.left) {
     //     return {
@@ -208,12 +220,14 @@ const countAwkwardness = async (ctx, bill) => {
     // }
     var q = bill.price
     var awk
-    var user = await User.findOne({userId:bill.userId})
-    console.log('user.charge',user.charge)
+    var user = await User.findOne({
+        userId: bill.userId
+    })
+    console.log('user.charge', user.charge)
     console.log(bill.userId)
     console.log(user)
     awk = user.charge * 4.3318 / 100
-    console.log('user.charge * 4.3318 / 100',awk)
+    console.log('user.charge * 4.3318 / 100', awk)
     var obills = await Bill.find({
         userId: bill.userId,
         closed: true,
@@ -225,8 +239,8 @@ const countAwkwardness = async (ctx, bill) => {
     var os = 0
     await asyncForEach(obills, obill => {
         // if (obill.left != undefined)
-        console.log('obill.left' , obill.left)
-            os += obill.left
+        console.log('obill.left', obill.left)
+        os += obill.left
     })
 
     if (bill.isSell) {
@@ -234,21 +248,21 @@ const countAwkwardness = async (ctx, bill) => {
     } else {
         awk *= 0.85
     }
-    console.log('awk',awk)
+    console.log('awk', awk)
     console.info('bill.left', bill.left)
     console.info('os', os)
     console.info('bill.isSell', bill.isSell)
 
     awk = awk / os
-    
 
-    console.log('awk = awk / os',awk)
+
+    console.log('awk = awk / os', awk)
     if (bill.isSell) {
         awk = q + awk
     } else {
         awk = q - awk
     }
-    console.log('awk = q -+ awk',awk)
+    console.log('awk = q -+ awk', awk)
     var sellprice = awk
 
 

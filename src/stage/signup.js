@@ -67,8 +67,9 @@ const inputHandler = async (ctx, next) => {
                 ctx.session.stage = 'bankNameAsked'
             }
         } else if (!user.acceptedTerms) {
-            await ctx.reply(config.contract[0])
-            await ctx.reply(config.contract[1])
+            helpers.asyncForEach(config.contract, async c => {
+                await ctx.reply(c)
+            })
             // await ctx.reply(config.contract[2])
             await ctx.reply("آیا با شرایط و قوانین ما موافقط دارید؟", {
                 reply_markup: {
